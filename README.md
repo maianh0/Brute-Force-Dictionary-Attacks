@@ -170,69 +170,104 @@ username=admin&password=§password§
   - Xem cột Status: Nếu tất cả là 200, nhưng 1 dòng là 302 → đó là login thành công.
 <img width="1806" height="844" alt="image" src="https://github.com/user-attachments/assets/04c44233-8517-42f8-9749-264a5ab052a9" />
 > Ta thấy được username : apache và password : ginger
-> <img width="1853" height="821" alt="image" src="https://github.com/user-attachments/assets/313995a9-1a76-4e69-bfad-86a86dfed1b9" />
+<img width="1853" height="821" alt="image" src="https://github.com/user-attachments/assets/313995a9-1a76-4e69-bfad-86a86dfed1b9" />
 
+**Lab: Username enumeration via subtly different responses**
+- **Bước 1: Xác định Username hợp lệ**
+1. Mở Burp Suite và gửi một yêu cầu login với **username và password sai**.
+2. Truy cập tab **Proxy > HTTP history**, tìm request `POST /login`.
+3. **Bôi đen tham số `username`** và chọn **Send to Intruder**.
+4. Trong tab **Intruder**:
+   - Username sẽ được đánh dấu sẵn: `§username§`.
+   - Đảm bảo chế độ attack là **Sniper**.
+5. Chuyển sang tab **Payloads**:
+   - Loại payload: **Simple list**.
+   - Dán danh sách các username cần thử.
+6. Vào tab **Settings** > mục **Grep - Extract**:
+   - Nhấn **Add** → trong cửa sổ phản hồi, tìm dòng báo lỗi `"Invalid username or password."`.
+   - **Bôi đen dòng này** để trích xuất phản hồi tự động.
+7. Nhấn **Start Attack**.
+
+### 📋 Sau khi tấn công:
+- Một **cột mới** hiển thị nội dung lỗi từ phản hồi.
+- Sắp xếp theo cột đó → phát hiện một dòng có lỗi **khác biệt nhẹ** (ví dụ có dấu cách ở cuối).
+- Đó có thể là **username hợp lệ** → **ghi lại username này**.
+<img width="1919" height="1013" alt="image" src="https://github.com/user-attachments/assets/db8f256c-bf60-4605-ae02-ae3c8ad584cc" />
+<img width="1611" height="740" alt="image" src="https://github.com/user-attachments/assets/213bbf3f-b373-49ae-ab23-a3c268fea375" />
+
+**Bước 2: Tìm đúng password**
+- Quay lại Intruder, bấm Clear §.
+
+- Sửa request thành: username=correct-user&password=§pass§.
+
+- Trong tab Payloads, dán danh sách password cần thử và bấm Start attack.
+
+- Khi kết thúc:
+
+  - Xem cột Status: Nếu tất cả là 200, nhưng 1 dòng là 302 → đó là login thành công.
+  - <img width="1605" height="761" alt="image" src="https://github.com/user-attachments/assets/e255d9c9-4986-4839-8fcc-74fccd2f3a1c" />
+  > Ta thấy được username : alterwind và password : buster
+<img width="1666" height="766" alt="image" src="https://github.com/user-attachments/assets/9da74006-6d66-46b1-a40b-ef9888ce950a" />
 
 ### 2.3 Kỹ thuật bypass bảo vệ
 
-#### A. Rate Limiting Bypass
+#### 1. Xoay IP (IP Rotation)
+- Hệ thống bảo vệ thường theo dõi số lượng yêu cầu từ một địa chỉ IP trong khoảng thời gian nhất định. Nếu vượt quá ngưỡng (ví dụ: 10 lần đăng nhập thất bại trong 5 phút), IP sẽ bị chặn tạm thời (rate limiting) hoặc vĩnh viễn (IP ban).
+- **Cách bypass**: 
+  - Sử dụng nhiều địa chỉ IP khác nhau cho từng yêu cầu bằng cách áp dụng proxy (như proxy residential), VPN, hoặc dịch vụ ẩn danh như Tor. 
+  - Ví dụ: Cấu hình công cụ như Burp Suite với danh sách proxy để tự động chuyển đổi IP sau mỗi yêu cầu.
+  - Điều này giúp phân tán các yêu cầu, tránh bị phát hiện bởi các quy tắc chặn dựa trên IP.
+- **Ví dụ** lab Broken brute-force protection, IP block
+    - Thử đăng nhập bằng username Carlos thì đăng nhập sai 3 lần sẽ bị giới hạn số lần nhập sai
+    - <img width="1919" height="1015" alt="image" src="https://github.com/user-attachments/assets/34d954bd-09fa-46a7-b1fb-c2d8202c0a03" />
+    - Do đó cần phải tạo 1 danh sách tên và mật khẩu sao cho thử 2 lần và tới lần thứ 3 sẽ là mật khẩu đúng(wiener:peter)
+    - <img width="1116" height="599" alt="image" src="https://github.com/user-attachments/assets/4898eaf1-803a-4786-8792-081916636c7b" />
+    <img width="1919" height="948" alt="image" src="https://github.com/user-attachments/assets/44be8b5d-f99e-405f-83c1-9730f2c45cae" />
+    <img width="1919" height="722" alt="image" src="https://github.com/user-attachments/assets/ecfe8783-3d1f-476a-93a9-afa350279cd9" />
+- Đã dò được password là pepper
+<img width="1616" height="856" alt="image" src="https://github.com/user-attachments/assets/a072e978-e08a-4f98-9955-444828e54786" />
+<img width="1856" height="818" alt="image" src="https://github.com/user-attachments/assets/c4c2f92f-4be4-4d1c-aaea-c0fdc8fd53f2" />
 
-**IP Rotation:**
 
-```python
-proxies = [
-    'http://proxy1:8080',
-    'http://proxy2:8080',
-    'http://proxy3:8080'
-]
-```
 
-**X-Forwarded-For Header Spoofing:**
+#### 2. Giả mạo Header (Header Spoofing)
+- Một số hệ thống sử dụng header như `X-Forwarded-For` hoặc `User-Agent` để theo dõi nguồn gốc yêu cầu. Nếu phát hiện nhiều yêu cầu từ cùng một header hoặc mẫu, hệ thống có thể chặn dựa trên đó.
+- **Cách bypass**: 
+  - Thay đổi các header như `X-Forwarded-For` hoặc `X-Real-IP` bằng các giá trị ngẫu nhiên (ví dụ: IP giả mạo) để đánh lừa hệ thống rằng yêu cầu đến từ nhiều nguồn khác nhau.
+  - Sử dụng công cụ như Postman hoặc script Python với thư viện `requests` để tùy chỉnh header.
+  - Tuy nhiên, hiệu quả phụ thuộc vào việc hệ thống có kiểm tra tính hợp lệ của header (ví dụ: so sánh với IP thực tế) hay không.
 
-```http
-X-Forwarded-For: 192.168.1.100
-X-Real-IP: 192.168.1.101
-X-Originating-IP: 192.168.1.102
-```
+#### 3. Thử nghiệm hợp lệ xen kẽ (Valid Login Interleaving)
+- Hệ thống thường đếm số lần đăng nhập thất bại liên tiếp và kích hoạt chặn (ví dụ: khóa tài khoản sau 5 lần thử sai) để ngăn brute-force.
+- **Cách bypass**: 
+  - Thực hiện đăng nhập hợp lệ (ví dụ: tài khoản "wiener" với mật khẩu "peter") xen kẽ giữa các lần thử brute-force để làm "làm mới" bộ đếm thất bại.
+  - Sử dụng script tự động (như Python với `time.sleep()` để thêm độ trễ) để luân phiên giữa đăng nhập hợp lệ và thử sai, tránh vượt ngưỡng chặn.
+  - Phương pháp này hiệu quả với các hệ thống không theo dõi toàn bộ lịch sử mà chỉ dựa vào chuỗi thất bại liên tiếp.
 
-**User-Agent Rotation:**
+#### 4. Vượt qua CAPTCHA (Bypass CAPTCHA)
+- CAPTCHA được triển khai để xác minh rằng người dùng là con người, thường được kích hoạt sau một số lần thử thất bại để ngăn bot thực hiện brute-force.
+- **Cách bypass**: 
+  - Sử dụng dịch vụ nhận diện CAPTCHA tự động (như 2Captcha hoặc Anti-Captcha) để giải mã và gửi lại kết quả.
+  - Thực hiện tấn công trước khi CAPTCHA được kích hoạt (ví dụ: thử với tốc độ chậm hoặc trong khoảng thời gian không bị giám sát).
+  - Kết hợp với các kỹ thuật khác (như xoay IP) để duy trì quá trình brute-force liên tục.
+  - Lưu ý: Phương pháp này có thể bị phát hiện nếu hệ thống sử dụng CAPTCHA phức tạp hoặc giám sát chặt chẽ.
 
-```python
-user_agents = [
-    'Mozilla/5.0 (Windows NT 10.0...)',
-    'Mozilla/5.0 (Macintosh...)',
-    'Mozilla/5.0 (Linux x86_64...)'
-]
-```
-
-#### B. CAPTCHA Bypass
-
-- Sử dụng OCR tools (ví dụ: Tesseract)  
-- Dịch vụ giải CAPTCHA tự động: `2captcha`, `Anti-Captcha`  
-- Phân tích pattern (với CAPTCHA đơn giản)  
-- Reuse session để tránh bị CAPTCHA
-
-#### C. Account Lockout Evasion
-
-**Password Spraying Technique:**
-
-```text
-user1:password123
-user2:password123
-user3:password123
-
-user1:admin123
-user2:admin123
-user3:admin123
-```
-
-**Timing Attacks:**
-
-- Giãn thời gian giữa các lần thử  
-- Tấn công từ nhiều IP (Distributed brute force)  
-- Kỹ thuật “low-and-slow” để tránh detection
-
----
+#### Response timing
+- Hệ thống theo dõi thời gian phản hồi để phát hiện brute-force. Yêu cầu quá nhanh (dưới 1 giây) hoặc phản hồi chậm khi username không tồn tại (time-based comparison) sẽ kích hoạt chặn.
+#### Cách vượt qua
+- **Thêm độ trễ ngẫu nhiên**: Dùng script (như `time.sleep(1-5)` trong Python) để mô phỏng hành vi con người.
+- **Phân tích thời gian**: Điều chỉnh tần suất dựa trên phản hồi bình thường (dùng `curl -w "%{time_total}"`).
+- **Tấn công chậm**: Thử username mỗi 10 phút, kết hợp wordlist nhỏ.
+- **Nhiều session**: Sử dụng proxy và đa luồng (như Hydra `-t`) để phân tán yêu cầu.
+- **Ví dụ bài lab** Username enumeration via response timing
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/38e73c89-9adc-4c50-929d-4e38d2e5e1d3" />
+<img width="1919" height="991" alt="image" src="https://github.com/user-attachments/assets/ce284af5-10d6-486e-8934-53b49916eb67" />
+<img width="1609" height="861" alt="image" src="https://github.com/user-attachments/assets/e6a14ef0-c2a5-4e8c-bf40-1d75848896ee" />
+- tương tự với password
+- <img width="1877" height="980" alt="image" src="https://github.com/user-attachments/assets/3bfae7c5-f197-4f3f-86cb-133d309b02c3" />
+<img width="1609" height="840" alt="image" src="https://github.com/user-attachments/assets/6d32f035-b89c-44a3-bf35-029e3a469431" />
+> Tìm ra được username và password là access|mom.
+> <img width="1756" height="856" alt="image" src="https://github.com/user-attachments/assets/1b3253d6-9466-44fc-bc27-6f6f9d6d0840" />
 
 ### 2.4 Wordlist và Dictionary Management
 
