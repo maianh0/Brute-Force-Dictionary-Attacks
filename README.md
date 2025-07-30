@@ -54,42 +54,44 @@ hydra -l maianh -P wordlist.txt ssh://172.16.1.29
 ```
 <img width="938" height="235" alt="image" src="https://github.com/user-attachments/assets/9ddffcee-b1e5-49a5-9c63-7f952a167c86" />
 
-#### B. John the Ripper - Password Hash Cracker
+#### B. Dirsearch - Web Directory Scanner
+**Thời gian quét**: Bắt đầu lúc [03:42 PM +07, July 30, 2025], hoàn thành lúc [03:43 PM +07, July 30, 2025].
+**Kết quả**: Đã phát hiện nhiều endpoint và tệp, bao gồm:
+- /google.com (HTTP 302)
+- /test (HTTP 200)
+- /etc/passwd (HTTP 200)
+- /admin/%3Bindex/ (HTTP 200)
+- /axis2-web/HappyAxis.jsp (HTTP 200)
+- /cgi-bin/.%2e/.%2e/.%2e/.%2e/etc/passwd (HTTP 200)
+- /Citrix/AccessPlatform/auth/clientscripts/cookies.js (HTTP 200)
+- /engine/classes/swfupload/swfupload_f9.swf (HTTP 200)
+- /jkstatus (HTTP 200)
+- /login.wdm%2e (HTTP 200)
+- Và nhiều thư mục/tệp khác
+<img width="1448" height="697" alt="image" src="https://github.com/user-attachments/assets/5430f667-afe4-4fc2-906c-54766898874f" />
+
+#### C. John the ripper
 
 **Các lệnh cơ bản**:
 
 ```bash
-# Crack Linux password hashes
-john --wordlist=rockyou.txt /etc/shadow
+# Tạo file md5.hash chứa hash MD5
+echo "81d9d0b5d2d4dc2003d6db8313ed055" > md5.hash
 
-# Crack với rules để biến đổi wordlist
-john --rules --wordlist=passwords.txt hash.txt
+# Hiển thị nội dung file md5.hash
+cat md5.hash
 
-# Show cracked passwords
-john --show hash.txt
+# Sử dụng John the Ripper để crack hash MD5
+sudo john --format=raw-md5 md5.hash
+
 ```
+Ở đây ta sẽ bẻ khoá hàm băm md5. Hash dữ liệu “1234” với MD5
+ <img width="940" height="228" alt="image" src="https://github.com/user-attachments/assets/8608a607-7b99-4c1e-bfd4-bc5688b18371" />
 
-**Tính năng nổi bật**:
+Thực hiện tạo 1 file là md5.hash để lưu dữ liệu vừa hash. 
+Để thực hiển bẻ khóa mã hash MD5 trên với John the Ripper
+<img width="940" height="326" alt="image" src="https://github.com/user-attachments/assets/70672851-abbf-4bc1-ac25-d8a28618e11a" />
 
-- Auto-detect hash types  
-- Custom rules để modify wordlist  
-- Distributed cracking trên nhiều máy  
-- Hỗ trợ GPU acceleration
-
-#### C. Hashcat - Advanced Password Recovery
-
-**Các lệnh cơ bản**:
-
-```bash
-# MD5 hash cracking
-hashcat -a 0 -m 0 hash.txt wordlist.txt
-
-# Combination attack
-hashcat -a 1 -m 0 hash.txt dict1.txt dict2.txt
-
-# Mask attack (brute force với pattern)
-hashcat -a 3 -m 0 hash.txt ?l?l?l?l?d?d?d?d
-```
 
 ### 2.2 Ứng dụng Burp Suite Intruder
 
@@ -135,8 +137,41 @@ username=admin&password=§password§
 
 - **Cluster Bomb**:
   - Nhiều payload set, thử tất cả tổ hợp (combinations)
+#### Để nắm chi tiết, thực hiện một vài bài lab
+**Lab: Username enumeration via different responses**
+**Bước 1: Tìm đúng username**
+- Mở Burp và truy cập trang login, nhập sai username + password.
 
----
+- Trong Burp, vào Proxy > HTTP history, tìm request POST /login.
+
+- Click phải vào phần username → chọn Send to Intruder.
+
+- Trong tab Intruder, để chế độ Sniper, giữ nguyên password, chỉ đánh dấu username (§username§).
+
+- Vào tab Payloads, dán danh sách các username cần thử và bấm Start attack.
+
+- Khi kết thúc:
+
+  - Xem cột Length → giá trị nào dài hơn có thể là username đúng.
+
+  - So sánh response → nếu thấy "Incorrect password" thay vì "Invalid username" → bạn đã tìm ra username hợp lệ.
+<img width="1861" height="960" alt="image" src="https://github.com/user-attachments/assets/91c07dfb-6b2a-46f6-9a98-df89b1f3d2d6" />
+<img width="1808" height="890" alt="image" src="https://github.com/user-attachments/assets/4cdba024-d703-4033-b3db-13b571d6f7b4" />
+- Từ hình trên ta thấy được username tìm được là "apache"
+**Bước 2: Tìm đúng password**
+- Quay lại Intruder, bấm Clear §.
+
+- Sửa request thành: username=correct-user&password=§pass§.
+
+- Trong tab Payloads, dán danh sách password cần thử và bấm Start attack.
+
+- Khi kết thúc:
+
+  - Xem cột Status: Nếu tất cả là 200, nhưng 1 dòng là 302 → đó là login thành công.
+<img width="1806" height="844" alt="image" src="https://github.com/user-attachments/assets/04c44233-8517-42f8-9749-264a5ab052a9" />
+> Ta thấy được username : apache và password : ginger
+> <img width="1853" height="821" alt="image" src="https://github.com/user-attachments/assets/313995a9-1a76-4e69-bfad-86a86dfed1b9" />
+
 
 ### 2.3 Kỹ thuật bypass bảo vệ
 
