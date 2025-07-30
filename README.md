@@ -1,4 +1,9 @@
 # Brute-Force-Dictionary-Attacks
+
+**Thực hiện**: Mai Anh  
+**Cập nhật lần cuối**: 30/07/2025
+
+
 ## 1. Giới thiệu về Brute Force và Dictionary Attacks
 
 ### 1.1 Định nghĩa và phân biệt
@@ -91,6 +96,21 @@ sudo john --format=raw-md5 md5.hash
 Thực hiện tạo 1 file là md5.hash để lưu dữ liệu vừa hash. 
 Để thực hiển bẻ khóa mã hash MD5 trên với John the Ripper
 <img width="940" height="326" alt="image" src="https://github.com/user-attachments/assets/70672851-abbf-4bc1-ac25-d8a28618e11a" />
+
+#### D. FFUF
+**Các lệnh cơ bản**:
+
+```bash
+# Hiển thị nội dung file myList.txt
+cat /home/kali/Desktop/myList.txt
+
+# Sử dụng FFUF để quét các thư mục/tệp trên web
+ffuf -u https://united.com/Fuzz -w /home/kali/Desktop/myList.txt -e php,bak,zip,env,log,sql -mc 200,403 -t 50
+```
+- Ở đây ta sẽ quét các thư mục hoặc tệp ẩn trên trang web https://united.com/Fuzz bằng FFUF. Danh sách từ điển trong myList.txt sẽ được sử dụng để thử các đường dẫn.
+  <img width="1252" height="561" alt="image" src="https://github.com/user-attachments/assets/07c7bbf0-817e-45b1-872c-92964efa650a" />
+
+-Thực hiện tạo file myList.txt để lưu danh sách từ điển và sử dụng FFUF để quét các endpoint tiềm năng.
 
 
 ### 2.2 Ứng dụng Burp Suite Intruder
@@ -267,102 +287,31 @@ username=admin&password=§password§
 - <img width="1877" height="980" alt="image" src="https://github.com/user-attachments/assets/3bfae7c5-f197-4f3f-86cb-133d309b02c3" />
 <img width="1609" height="840" alt="image" src="https://github.com/user-attachments/assets/6d32f035-b89c-44a3-bf35-029e3a469431" />
 > Tìm ra được username và password là access|mom.
-> <img width="1756" height="856" alt="image" src="https://github.com/user-attachments/assets/1b3253d6-9466-44fc-bc27-6f6f9d6d0840" />
+<img width="1756" height="856" alt="image" src="https://github.com/user-attachments/assets/1b3253d6-9466-44fc-bc27-6f6f9d6d0840" />
 
 ### 2.4 Wordlist và Dictionary Management
 
-#### A. Wordlist phổ biến
+- **RockYou**: Wordlist siêu phổ biến với hơn 14 triệu mật khẩu rò rỉ, tải từ Offensive Security hoặc GitHub. Dùng tốt cho SSH, FTP, web login.
+- **John the Ripper Default**: Mật khẩu cơ bản kèm biến thể (như `password123`), có sẵn trong John (thường ở `/usr/share/john/password.lst`). Thử nhanh hoặc kết hợp quy tắc.
+- **SecLists**: Bộ sưu tập đa dạng từ GitHub[](https://github.com/danielmiessler/SecLists), gồm mật khẩu, username. Hợp cho web và lỗ hổng đặc thù.
+- **Crunch**: Tạo wordlist tùy chỉnh (như `?l?l?d?d`) ngay trên Kali với lệnh `crunch`. Dùng khi cần danh sách riêng.
+- **Hashcat Default**: Mật khẩu phổ biến như `top1000.txt`, đi kèm Hashcat. Tốt cho crack hash hoặc brute-force phức tạp.
+## Cách Tạo Wordlist dùng cho Brute-Force
 
-| Wordlist              | Mô tả                                | Kích thước      |
-|-----------------------|--------------------------------------|-----------------|
-| rockyou.txt           | 14M passwords từ data breach         | ~133MB          |
-| SecLists              | Bộ sưu tập wordlist dùng pentesting  | Rất đa dạng     |
-| CIRT Default Passwords| Default credentials từ thiết bị      | ~1000 entries   |
-| Custom wordlists      | Dựa trên thông tin từ target cụ thể  | Tùy thuộc       |
+### 1. Tạo Wordlist bằng Crunch
 
-#### B. Wordlist Generation Tools
+**Crunch** 
 
-**Crunch:**
+- Tạo wordlist với độ dài từ 8 đến 12 ký tự:
 
+  ```bash
+  crunch 8 12 -o wordlist.txt
+
+  crunch 8 8 -t @@@%123 //Tạo mật khẩu theo mẫu: 3 chữ cái, 1 ký tự đặc biệt, sau đó là số 123
+  ```
+### 2. Tạo wordlist thủ công bằng notepad/mousepad
+### 3. Tạo biến thể bằng John the Ripper
 ```bash
-# Generate 4–6 character passwords
-crunch 4 6 abcdefghijklmnopqrstuvwxyz
-
-# Pattern-based generation
-crunch 8 8 -t password@@
-
-# Custom character set
-crunch 8 8 -t @@@@@@## -f charset.lst mixalpha-numeric
+john --wordlist=mylist.txt --rules --stdout > mutated.txt
 ```
-
-**CeWL:**
-
-```bash
-# Extract từ website
-cewl -d 2 -m 5 https://target.com
-
-# Include email addresses và usernames
-cewl -e -n https://target.com
-
-# Output to file
-cewl -w wordlist.txt -m 6 https://target.com
-```
-
-**Mentalist (GUI):**
-
-- Giao diện đồ họa tạo wordlist  
-- Cho phép rule-based transformation  
-- Có thống kê & hỗ trợ biến thể tự động
-
----
-
-#### C. Wordlist Optimization
-
-```bash
-# Remove duplicates and sort
-sort wordlist.txt | uniq > clean_wordlist.txt
-
-# Combine multiple lists
-cat list1.txt list2.txt | sort | uniq > combined.txt
-
-# Filter by password length
-awk 'length($0) >= 8 && length($0) <= 12' wordlist.txt > filtered.txt
-
-# Remove special characters
-grep -v '[^a-zA-Z0-9]' wordlist.txt > clean.txt
-```
-
-**Statistical Analysis:**
-
-```bash
-# Word frequency
-sort wordlist.txt | uniq -c | sort -nr
-
-# Password length distribution
-awk '{print length}' wordlist.txt | sort -n | uniq -c
-
-# Character frequency
-fold -w1 wordlist.txt | sort | uniq -c | sort -nr
-```
-
-#### D. Target-specific Wordlist Creation
-
-**Thông tin thu thập được từ:**
-
-- Tên công ty, sản phẩm, sự kiện, ngày thành lập  
-- Tên nhân viên từ LinkedIn, Facebook  
-- Các thuật ngữ kỹ thuật từ job description  
-
-**Công cụ OSINT:**
-
-```bash
-# LinkedIn enumeration
-python3 linkedin2username.py -c "Company Name"
-
-# Google dorking
-site:pastebin.com "Company Name" password
-
-# Sherlock (search username across platforms)
-python3 sherlock.py username
-```
-
+...
