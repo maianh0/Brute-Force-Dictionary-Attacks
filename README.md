@@ -3,7 +3,17 @@
 **Thực hiện**: Mai Anh  
 **Cập nhật lần cuối**: 30/07/2025
 
+## 📑 Mục lục
 
+1. [Giới thiệu về Brute Force và Dictionary Attacks](#1-giới-thiệu-về-brute-force-và-dictionary-attacks)  
+2. [Phương pháp thực hiện tấn công](#2-phương-pháp-thực-hiện-tấn-công)  
+   - [2.1 Sử dụng các công cụ brute-force](#21-sử-dụng-các-công-cụ-brute-force)  
+   - [2.2 Ứng dụng Burp Suite Intruder](#22-ứng-dụng-burp-suite-intruder)    
+   - [2.3 Kỹ thuật bypass bảo vệ](#23-kỹ-thuật-bypass-bảo-vệ)  
+3. [Wordlist và Quản lý Dictionary](#3-wordlist-và-quản-lý-dictionary)  
+   - [Danh sách wordlist phổ biến](#danh-sách-wordlist-phổ-biến)  
+   - [Cách tạo Wordlist cho Brute-Force](#cách-tạo-wordlist-dùng-cho-brute-force)  
+     
 ## 1. Giới thiệu về Brute Force và Dictionary Attacks
 
 ### 1.1 Định nghĩa và phân biệt
