@@ -3,7 +3,7 @@
 **Thực hiện**: Mai Anh  
 **Cập nhật lần cuối**: 30/07/2025
 
-## 📑 Mục lục
+## Mục lục
 
 1. [Giới thiệu về Brute Force và Dictionary Attacks](#1-giới-thiệu-về-brute-force-và-dictionary-attacks)  
 2. [Phương pháp thực hiện tấn công](#2-phương-pháp-thực-hiện-tấn-công)  
